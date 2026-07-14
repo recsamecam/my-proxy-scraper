@@ -1,15 +1,18 @@
 const fetch = require('node-fetch');
-module.exports = async (req, res) => {
-  const { url, webhookUrl } = req.body;
-  const response = await fetch(url);
-  const html = await response.text();
-  // Contoh ekstraksi
-  const data = { keyword: "test", nama: "Contoh", email: "test@mail.com" }; 
 
-  // Kirim hasil ke Google Sheets via Webhook
-  await fetch(webhookUrl + "?token=rahasia123", {
-    method: 'POST',
-    body: JSON.stringify(data)
-  });
-  res.send("Data dikirim!");
-};
+export default async function handler(req, res) {
+  try {
+    const targetUrl = req.query.url;
+    if (!targetUrl) {
+      return res.status(400).json({ error: "URL parameter diperlukan" });
+    }
+
+    const response = await fetch(targetUrl);
+    const data = await response.text();
+    
+    res.status(200).send(data);
+  } catch (error) {
+    console.error("Detail Error:", error);
+    res.status(500).json({ error: error.message });
+  }
+}
