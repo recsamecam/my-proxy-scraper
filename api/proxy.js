@@ -1,7 +1,7 @@
 const fetch = require('node-fetch');
 
 export default async function handler(req, res) {
-  // GANTI DENGAN API KEY & WEBHOOK URL ANDA
+  // Kredensial resmi Anda
   const SERPER_API_KEY = "7bdaceeb53e7779804418dabda1cbc871b26b364";
   const webhookUrl = "https://script.google.com/macros/s/AKfycbzyXfJNI9XT8END_gtlg-_LefICbbt25DKuAJvicAwgQB791YIH7GTZmfwihht_9OY/exec?token=rahasia123";
   
@@ -12,60 +12,82 @@ export default async function handler(req, res) {
   }
 
   try {
-    // 1. Ambil data dari Serper.dev
-    const response = await fetch('https://google.serper.dev/search', {
+    // 1. Panggil Endpoint Google Maps milik Serper.dev
+    const response = await fetch('https://google.serper.dev/maps', {
       method: 'POST',
       headers: { 
         'X-API-KEY': SERPER_API_KEY,
         'Content-Type': 'application/json' 
       },
-      body: JSON.stringify({ q: keyword, num: 10 }) 
+      body: JSON.stringify({ q: keyword, num: 10 }) // Mengambil 10 data tempat teratas
     });
 
     const data = await response.json();
-    const results = data.organic || [];
+    const results = data.places || [];
     const tanggalSekarang = new Date().toLocaleString("id-ID", { timeZone: "Asia/Jakarta" });
 
-    // 2. Kirim data ke Google Sheets sesuai kolom A-Y
-    for (const site of results) {
-      const payload = {
-        company: site.title,           // A: COMPANY
-        name: "PIC / Procurement",     // B: NAME
-        country: "Target Market",      // C: COUNTRY
-        address: tanggalSekarang,      // D: ADDRESS
-        phone: "",                     // E: PHONE
-        email: "",                     // F: EMAIL
-        web: site.link,                // G: WEB
-        fb: "",                        // H: FB
-        source: "Serper.dev Auto",     // I: SOURCE
-        commodity: keyword,            // J: Commodity
-        commodity2: "",                // K: Commodity2
-        commodity3: "",                // L: Commodity3
-        commodity4: "",                // M: Commodity4
-        commodity5: "",                // N: Commodity5
-        commodity6: "",                // O: Commodity6
-        commodity7: "",                // P: Commodity7
-        remarks: site.snippet,         // Q: Remarks (Snippet pencarian)
-        lastSent: "",                  // R: LastSent
-        by: "System",                  // S: By
-        remarks2: "",                  // T: Remarks2
-        timezone: "WIB",               // U: Timezone
-        language: "en",                // V: Language
-        autocratTrigger: "",           // W: AutocratTrigger
-        remarks3: "",                  // X: Remarks3
-        date: tanggalSekarang          // Y: Date
-      };
+    // 2. Kirim data ke Google Sheets dengan pemisahan Alamat & Negara yang akurat
+    for (const place of results) {
+      
+      // Logika Pemisahan Alamat Fisik vs Negara
+      let alamatFisik = place.address || "Alamat tidak tertera";
+      let namaNegara = "Target Market";
 
+      // Mendeteksi kata negara dari keyword input (misal: "Charcoal Saudi Arabia" -> "Saudi Arabia")
+      const kataKunci = keyword.trim();
+      const posisiSpasi = kataKunci.indexOf(' ');
+      if (posisiSpasi !== -1) {
+        namaNegara = kataKunci.substring(posisiSpasi + 1);
+      }
+
+      // Bersihkan nama negara dari bagian ujung alamat fisik jika terdeteksi, agar Kolom D bersih
+      if (alamatFisik.toLowerCase().endsWith(namaNegara.toLowerCase())) {
+        alamatFisik = alamatFisik.substring(0, alamatFisik.length - namaNegara.length).trim();
+        // Hapus tanda koma tersisa di ujung jika ada
+        if (alamatFisik.endsWith(',')) {
+          alamatFisik = alamatFisik.substring(0, alamatFisik.length - 1).trim();
+        }
+      }
+
+      const rowData = [
+        place.title || "No Title",     // A: COMPANY (Nama Bisnis di Maps)
+        "PIC / Procurement",           // B: NAME
+        namaNegara,                    // C: COUNTRY (Hanya nama negara)
+        alamatFisik,                   // D: ADDRESS (Alamat bersih tanpa nama negara di ujung)
+        place.phoneNumber || "",       // E: PHONE (Nomor telepon resmi dari Google Maps!)
+        "",                            // F: EMAIL (Kosong, karena Maps tidak menyediakan email)
+        place.website || "",           // G: WEB (Website resmi perusahaan jika ada)
+        "",                            // H: FB
+        "Serper Maps API",             // I: SOURCE
+        keyword,                       // J: Commodity
+        "",                            // K: Commodity2
+        "",                            // L: Commodity3
+        "",                            // M: Commodity4
+        "",                            // N: Commodity5
+        "",                            // O: Commodity6
+        "",                            // P: Commodity7
+        `Rating: ${place.rating || '-'} (${place.ratingCount || 0} reviews) | Category: ${place.category || '-'}`, // Q: Remarks
+        "",                            // R: LastSent
+        "System",                      // S: By
+        "",                            // T: Remarks2
+        "WIB",                         // U: Timezone
+        "en",                          // V: Language
+        "",                            // W: AutocratTrigger
+        "",                            // X: Remarks3
+        tanggalSekarang                // Y: Date
+      ];
+
+      // Kirim hasil pemetaan ke Webhook Google Sheets
       await fetch(webhookUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        body: JSON.stringify({ rowData: rowData })
       });
     }
 
     res.status(200).json({ 
       status: "Sukses", 
-      message: `Berhasil memproses ${results.length} website untuk keyword: ${keyword}` 
+      message: `Berhasil mengambil ${results.length} data lokasi dari Google Maps untuk keyword: ${keyword}` 
     });
     
   } catch (error) {
