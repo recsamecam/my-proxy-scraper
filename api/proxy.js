@@ -56,7 +56,7 @@ export default async function handler(req, res) {
       website: organic.link
     };
 
-    const gasRes = await fetch(process.env.GAS_WEBAPP_URL, {
+    const gasRes = await fetch("https://script.google.com/macros/s/AKfycbzwavjSaWjF9G1t9w0iTSEfJKUt-51O06JV2nwhcAEoWJcKf-7GzMFZsjDB82u4jgM/exec", {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
