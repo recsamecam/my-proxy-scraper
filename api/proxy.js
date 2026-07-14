@@ -3,7 +3,7 @@ const fetch = require('node-fetch');
 export default async function handler(req, res) {
   // Kredensial resmi Anda
   const SERPER_API_KEY = "7bdaceeb53e7779804418dabda1cbc871b26b364";
-  const webhookUrl = "https://script.google.com/macros/s/AKfycbzyXfJNI9XT8END_gtlg-_LefICbbt25DKuAJvicAwgQB791YIH7GTZmfwihht_9OY/exec?token=rahasia123";
+  const webhookUrl = "https://script.google.com/macros/s/AKfycbzwavjSaWjF9G1t9w0iTSEfJKUt-51O06JV2nwhcAEoWJcKf-7GzMFZsjDB82u4jgM/exec?token=rahasia123";
   
   const keyword = req.query.keyword;
 
