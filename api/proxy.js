@@ -62,7 +62,11 @@ export default async function handler(req, res) {
       body: JSON.stringify(payload)
     });
 
-    res.status(200).json({ status: 'Success', details: payload });
+    // Tambahkan baris ini untuk melihat hasil kiriman di log Vercel
+    const textRes = await gasRes.text();
+    console.log("Respon dari Google Sheets:", textRes);
+
+    res.status(200).json({ status: 'Success', details: payload, googleResponse: textRes });
 
   } catch (error) {
     res.status(500).json({ error: error.message });
