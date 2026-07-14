@@ -9,16 +9,26 @@ export default async function handler(req, res) {
   }
 
   try {
-    // 1. Scraping via Serper
+    // OPTIMASI: Menambahkan filter untuk mengecualikan marketplace
+    const optimizedQuery = `${keyword} -site:amazon.com -site:alibaba.com -site:indiamart.com -site:facebook.com -site:linkedin.com`;
+
+    // 1. Scraping via Serper dengan Query Teroptimasi
     const searchResponse = await fetch("https://google.serper.dev/search", {
       method: "POST",
-      headers: { "X-API-KEY": process.env.SERPER_API_KEY, "Content-Type": "application/json" },
-      body: JSON.stringify({ q: keyword, gl: countryCode.toLowerCase() })
+      headers: { 
+        "X-API-KEY": process.env.SERPER_API_KEY, 
+        "Content-Type": "application/json" 
+      },
+      body: JSON.stringify({ 
+        q: optimizedQuery, 
+        gl: countryCode.toLowerCase() 
+      })
     });
+    
     const searchData = await searchResponse.json();
-    const organic = searchData.organic?.[0]; // Mengambil hasil pertama
+    const organic = searchData.organic?.[0];
 
-    if (!organic) throw new Error("Tidak ada hasil pencarian");
+    if (!organic) throw new Error("Tidak ada hasil pencarian yang relevan");
 
     // 2. Cari Email via Hunter.io
     const domain = new URL(organic.link).hostname.replace('www.', '');
@@ -37,7 +47,7 @@ export default async function handler(req, res) {
     // 3. Siapkan data untuk dikirim ke Google Sheets
     const payload = {
       company: organic.title,
-      name: "N/A", // Google Maps biasanya tidak memberikan nama spesifik perorangan
+      name: "N/A",
       country: countryCode,
       address: "N/A",
       phone: "N/A",
