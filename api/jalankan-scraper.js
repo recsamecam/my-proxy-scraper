@@ -35,16 +35,17 @@ export default async function handler(req, res) {
         address = address.replace(/,\s*(USA|United States|US)$/i, "").trim();
 
         // 4. Susun Payload
-        const payload = {
-          company: item.title,
-          name: "N/A", // Default karena Serper/Hunter jarang memberikan nama kontak spesifik
-          countryCode: entry.country,
-          address: address,
-          phone: "N/A",
-          email: hData.data?.emails[0]?.value || "Not Found",
-          website: domain,
-          keyword: entry.keyword
-        };
+// Pastikan payload seperti ini di dalam loop Vercel:
+const payload = {
+  company: item.title,         // Untuk Kolom A
+  name: "N/A",                 // Untuk Kolom B
+  countryCode: entry.country,  // Untuk Kolom C
+  address: address,            // Untuk Kolom D (Alamat bersih)
+  phone: "N/A",                // Untuk Kolom E
+  email: hData.data?.emails[0]?.value || "Not Found", // Kolom F
+  website: domain,             // Kolom G
+  keyword: entry.keyword       // Untuk lookup Commodity
+};
 
         // Kirim data ke GAS via doPost
         const gRes = await fetch(GAS_URL, {
