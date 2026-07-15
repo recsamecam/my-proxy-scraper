@@ -2,7 +2,7 @@
   "crons": [
     {
       "path": "/api/jalankan-scraper",
-      "schedule": "15 07 * * *"
+      "schedule": "0 * * * *"
     }
   ]
 }
