@@ -9,7 +9,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const optimizedQuery = `${keyword} -site:amazon.com -site:alibaba.com -site:indiamart.com -site:facebook.com -site:linkedin.com`;
+    const optimizedQuery = `${keyword} -site:amazon.com -site:alibaba.com -site:indiamart.com -site:wikipedia.org -site:instageram.com -site:youtube.com -site:facebook.com -site:linkedin.com`;
 
     const searchResponse = await fetch("https://google.serper.dev/search", {
       method: "POST",
