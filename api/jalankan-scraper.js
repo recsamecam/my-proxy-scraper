@@ -39,19 +39,20 @@ export default async function handler(req, res) {
           const hData = await hRes.json();
 
           // Pembersihan alamat dari snippet
-          let rawAddress = item.snippet || "N/A";
-          let cleanAddress = rawAddress.length > 50 ? "N/A" : rawAddress.replace(/,\s*(USA|United States|US)$/i, "").trim();
+          // Jika snippet lebih dari 50 karakter, anggap bukan alamat dan jadikan blank ""
+          let rawAddress = item.snippet || "";
+          let cleanAddress = rawAddress.length > 50 ? "" : rawAddress.replace(/,\s*(USA|United States|US)$/i, "").trim();
 
-          // Susun Payload
+          // Susun Payload dengan default "" (blank) jika data tidak ditemukan
           const payload = {
-            company: item.title,
-            name: "N/A",
-            countryCode: entry.countryCode, // Mengambil dari kolom B (Kode)
+            company: item.title || "",
+            name: "",
+            countryCode: entry.countryCode || "",
             address: cleanAddress,
-            phone: "N/A",
-            email: hData.data?.emails?.[0]?.value || "Not Found",
-            website: domain,
-            keyword: entry.keyword
+            phone: "",
+            email: hData.data?.emails?.[0]?.value || "",
+            website: domain || "",
+            keyword: entry.keyword || ""
           };
 
           // Kirim data ke GAS via doPost
