@@ -4,17 +4,21 @@ export default async function handler(req, res) {
   const SERPER_API_KEY = "7bdaceeb53e7779804418dabda1cbc871b26b364";
   const HUNTER_API_KEY = "a3726c29ee95939ac553de002379c3b2edeaa344";
 
+  // Fungsi pembantu untuk membersihkan domain menjadi nama perusahaan
+  function cleanDomainToName(domain) {
+    let name = domain.split('.')[0];
+    name = name.replace(/[-_]/g, ' ');
+    return name.replace(/\b\w/g, c => c.toUpperCase());
+  }
+
   try {
-    // 1. Ambil list keyword dari Google Sheets via doGet
     const kwRes = await fetch(GAS_URL);
     if (!kwRes.ok) throw new Error("Gagal mengambil data dari Google Sheets");
     const keywords = await kwRes.json();
     
     let processedLogs = [];
 
-    // 2. Loop setiap keyword
     for (const entry of keywords) {
-      // Pencarian via Serper
       const serperRes = await fetch('https://google.serper.dev/search', {
         method: 'POST',
         headers: { 
@@ -34,7 +38,6 @@ export default async function handler(req, res) {
         try {
           const domain = new URL(item.link).hostname.replace('www.', '').toLowerCase();
           
-          // --- FILTER BLACKLIST (Marketplace & Sosmed) ---
           const blacklist = [
             "amazon.", "alibaba.", "shopee.", "tiktok.", "instagram.", 
             "facebook.", "twitter.", "reddit.", "quora.", "linkedin.", 
@@ -47,17 +50,20 @@ export default async function handler(req, res) {
             continue; 
           }
           
-          // Scraping email via Hunter.io
           const hRes = await fetch(`https://api.hunter.io/v2/domain-search?domain=${domain}&api_key=${HUNTER_API_KEY}`);
           const hData = await hRes.json();
 
-          // Pembersihan alamat dari snippet
           let rawAddress = item.snippet || "";
           let cleanAddress = rawAddress.length > 50 ? "" : rawAddress.replace(/,\s*(USA|United States|US)$/i, "").trim();
 
-          // Susun Payload
+          // LOGIKA PEMBERSIHAN NAMA PERUSAHAAN
+          let companyName = item.title || "";
+          if (companyName.length > 40 || companyName.toLowerCase().includes("|") || companyName.toLowerCase().includes("home")) {
+            companyName = cleanDomainToName(domain);
+          }
+
           const payload = {
-            company: item.title || "",
+            company: companyName,
             name: "",
             countryCode: entry.countryCode || "",
             address: cleanAddress,
@@ -67,7 +73,6 @@ export default async function handler(req, res) {
             keyword: entry.keyword || ""
           };
 
-          // Kirim data ke GAS via doPost
           const gRes = await fetch(GAS_URL, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
