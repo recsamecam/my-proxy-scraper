@@ -11,7 +11,7 @@ export default async function handler(req, res) {
     };
 
     // --- MENGIRIM KE GOOGLE SHEETS ---
-    const GOOGLE_URL = "https://script.google.com/macros/s/ISI_URL_WEB_APP_ANDA/exec";
+    const GOOGLE_URL = "https://script.google.com/macros/s/AKfycbzwavjSaWjF9G1t9w0iTSEfJKUt-51O06JV2nwhcAEoWJcKf-7GzMFZsjDB82u4jgM/exec";
 
     const response = await fetch(GOOGLE_URL, {
       method: "POST",
