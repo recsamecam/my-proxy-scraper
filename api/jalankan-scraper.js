@@ -4,9 +4,19 @@ export default async function handler(req, res) {
 
     // --- LOGIKA SCRAPING ANDA ---
     // Ganti bagian ini dengan fungsi scraping asli Anda
-    const dataHasilScrape = {
-      nama: "Contoh Data Scraper",
-      email: "hasil@scrape.com",
+// --- LOGIKA SCRAPING ANDA ---
+const dataHasilScrape = {
+  company: "Nama Perusahaan Asli", // Ini akan masuk ke Kolom A
+  name: "Nama Kontak/PIC",         // Ini akan masuk ke Kolom B
+  countryCode: "US",              // Ini akan masuk ke Kolom C
+  address: "Alamat Lengkap",      // Ini akan masuk ke Kolom D
+  phone: "123456789",             // Ini akan masuk ke Kolom E
+  email: "email@perusahaan.com",  // Ini akan masuk ke Kolom F
+  website: "https://web.com",     // Ini akan masuk ke Kolom G
+  keyword: "CHARCOAL GRILLS",     // Ini dipakai untuk cari Commodity di tab Keywords
+  gmt: "GMT+7",                   // Ini akan masuk ke Kolom U
+  lang: "en"                      // Ini akan masuk ke Kolom V
+};
       // Tambahkan field lainnya sesuai kebutuhan
     };
 
