@@ -34,16 +34,28 @@ export default async function handler(req, res) {
         try {
           const domain = new URL(item.link).hostname.replace('www.', '').toLowerCase();
           
+          // --- FILTER BLACKLIST (Marketplace & Sosmed) ---
+          const blacklist = [
+            "amazon.", "alibaba.", "shopee.", "tiktok.", "instagram.", 
+            "facebook.", "twitter.", "reddit.", "quora.", "linkedin.", 
+            "myshopify.", "lazada.", "tokopedia.", "ebay."
+          ];
+          
+          const isBlacklisted = blacklist.some(site => domain.includes(site));
+          if (isBlacklisted) {
+            processedLogs.push(`Skipped ${domain}: Blacklisted`);
+            continue; 
+          }
+          
           // Scraping email via Hunter.io
           const hRes = await fetch(`https://api.hunter.io/v2/domain-search?domain=${domain}&api_key=${HUNTER_API_KEY}`);
           const hData = await hRes.json();
 
           // Pembersihan alamat dari snippet
-          // Jika snippet lebih dari 50 karakter, anggap bukan alamat dan jadikan blank ""
           let rawAddress = item.snippet || "";
           let cleanAddress = rawAddress.length > 50 ? "" : rawAddress.replace(/,\s*(USA|United States|US)$/i, "").trim();
 
-          // Susun Payload dengan default "" (blank) jika data tidak ditemukan
+          // Susun Payload
           const payload = {
             company: item.title || "",
             name: "",
