@@ -3,7 +3,7 @@ export default async function handler(req, res) {
     console.log("Memulai eksekusi...");
 
     // URL Web App Anda
-    const GOOGLE_URL = "https://script.google.com/macros/s/ISI_URL_ANDA/exec"; 
+    const GOOGLE_URL = "https://script.google.com/macros/s/AKfycbzwavjSaWjF9G1t9w0iTSEfJKUt-51O06JV2nwhcAEoWJcKf-7GzMFZsjDB82u4jgM/exec"; 
 
     const payload = { 
       company: "Contoh Perusahaan",
