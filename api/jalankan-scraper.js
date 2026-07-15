@@ -32,7 +32,7 @@ export default async function handler(req, res) {
 
       for (const item of serperData.organic) {
         try {
-          const domain = new URL(item.link).hostname.replace('www.', '');
+          const domain = new URL(item.link).hostname.replace('www.', '').toLowerCase();
           
           // Scraping email via Hunter.io
           const hRes = await fetch(`https://api.hunter.io/v2/domain-search?domain=${domain}&api_key=${HUNTER_API_KEY}`);
