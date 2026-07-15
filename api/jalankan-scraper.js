@@ -1,29 +1,30 @@
 export default async function handler(req, res) {
   try {
-    console.log("Memulai eksekusi...");
+    console.log("Memulai proses scraping...");
 
-    // Ganti bagian di bawah ini dengan URL Web App Anda yang diakhiri dengan /exec
-    const GOOGLE_URL = "https://script.google.com/macros/s/AKfycbzwavjSaWjF9G1t9w0iTSEfJKUt-51O06JV2nwhcAEoWJcKf-7GzMFZsjDB82u4jgM/exec"; 
-
-    const payload = { 
-      nama: "Test", 
-      email: "test@test.com" 
+    // --- LOGIKA SCRAPING ANDA ---
+    // Ganti bagian ini dengan fungsi scraping asli Anda
+    const dataHasilScrape = {
+      nama: "Contoh Data Scraper",
+      email: "hasil@scrape.com",
+      // Tambahkan field lainnya sesuai kebutuhan
     };
 
-    console.log("Mencoba kirim ke:", GOOGLE_URL);
+    // --- MENGIRIM KE GOOGLE SHEETS ---
+    const GOOGLE_URL = "https://script.google.com/macros/s/ISI_URL_WEB_APP_ANDA/exec";
 
     const response = await fetch(GOOGLE_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
+      body: JSON.stringify(dataHasilScrape)
     });
 
     const result = await response.text();
     console.log("Respon dari Google:", result);
 
-    return res.status(200).json({ status: "Success", response: result });
+    return res.status(200).json({ status: "Success", data: dataHasilScrape });
   } catch (err) {
-    console.error("ERROR TERJADI:", err);
+    console.error("ERROR:", err);
     return res.status(500).json({ error: err.message });
   }
 }
