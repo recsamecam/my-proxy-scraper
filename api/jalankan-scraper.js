@@ -1,13 +1,10 @@
 export default async function handler(req, res) {
-  // Ganti dengan URL Web App Google Script Anda
   const GAS_URL = "https://script.google.com/macros/s/AKfycbzwavjSaWjF9G1t9w0iTSEfJKUt-51O06JV2nwhcAEoWJcKf-7GzMFZsjDB82u4jgM/exec";
   const SERPER_API_KEY = "7bdaceeb53e7779804418dabda1cbc871b26b364";
   const HUNTER_API_KEY = "a3726c29ee95939ac553de002379c3b2edeaa344";
 
-  // Fungsi pembantu untuk jeda (delay)
   const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
-  // Fungsi pembantu untuk membersihkan domain menjadi nama perusahaan
   function cleanDomainToName(domain) {
     let name = domain.split('.')[0];
     name = name.replace(/[-_]/g, ' ');
@@ -22,7 +19,6 @@ export default async function handler(req, res) {
     let processedLogs = [];
 
     for (const entry of keywords) {
-      // Jeda sebelum memanggil Serper API untuk setiap keyword
       await delay(1500);
 
       const serperRes = await fetch('https://google.serper.dev/search', {
@@ -33,7 +29,7 @@ export default async function handler(req, res) {
         },
         body: JSON.stringify({ 
           q: `${entry.keyword} in ${entry.countryName}`, 
-          num: 3 
+          num: 5 // Diubah dari 3 menjadi 5
         })
       });
       const serperData = await serperRes.json();
@@ -56,7 +52,6 @@ export default async function handler(req, res) {
             continue; 
           }
           
-          // Jeda sebelum memanggil Hunter.io
           await delay(1500);
 
           const hRes = await fetch(`https://api.hunter.io/v2/domain-search?domain=${domain}&api_key=${HUNTER_API_KEY}`);
@@ -65,7 +60,6 @@ export default async function handler(req, res) {
           let rawAddress = item.snippet || "";
           let cleanAddress = rawAddress.length > 50 ? "" : rawAddress.replace(/,\s*(USA|United States|US)$/i, "").trim();
 
-          // LOGIKA PEMBERSIHAN NAMA PERUSAHAAN
           let companyName = item.title || "";
           if (companyName.length > 40 || companyName.toLowerCase().includes("|") || companyName.toLowerCase().includes("home")) {
             companyName = cleanDomainToName(domain);
@@ -82,7 +76,6 @@ export default async function handler(req, res) {
             keyword: entry.keyword || ""
           };
 
-          // Jeda sebelum mengirim data ke Google Sheets
           await delay(1500);
 
           const gRes = await fetch(GAS_URL, {
