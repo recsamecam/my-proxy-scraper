@@ -4,6 +4,9 @@ export default async function handler(req, res) {
   const SERPER_API_KEY = "7bdaceeb53e7779804418dabda1cbc871b26b364";
   const HUNTER_API_KEY = "a3726c29ee95939ac553de002379c3b2edeaa344";
 
+  // Fungsi pembantu untuk jeda (delay)
+  const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
   // Fungsi pembantu untuk membersihkan domain menjadi nama perusahaan
   function cleanDomainToName(domain) {
     let name = domain.split('.')[0];
@@ -19,6 +22,9 @@ export default async function handler(req, res) {
     let processedLogs = [];
 
     for (const entry of keywords) {
+      // Jeda sebelum memanggil Serper API untuk setiap keyword
+      await delay(1500);
+
       const serperRes = await fetch('https://google.serper.dev/search', {
         method: 'POST',
         headers: { 
@@ -50,6 +56,9 @@ export default async function handler(req, res) {
             continue; 
           }
           
+          // Jeda sebelum memanggil Hunter.io
+          await delay(1500);
+
           const hRes = await fetch(`https://api.hunter.io/v2/domain-search?domain=${domain}&api_key=${HUNTER_API_KEY}`);
           const hData = await hRes.json();
 
@@ -72,6 +81,9 @@ export default async function handler(req, res) {
             website: domain || "",
             keyword: entry.keyword || ""
           };
+
+          // Jeda sebelum mengirim data ke Google Sheets
+          await delay(1500);
 
           const gRes = await fetch(GAS_URL, {
             method: "POST",
