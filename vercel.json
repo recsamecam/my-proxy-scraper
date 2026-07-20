@@ -4,5 +4,10 @@
       "path": "/api/jalankan-scraper",
       "schedule": "0 */6 * * *"
     }
-  ]
+  ],
+  "functions": {
+    "api/jalankan-scraper.js": {
+      "maxDuration": 60
+    }
+  }
 }
