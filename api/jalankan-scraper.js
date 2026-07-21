@@ -1,8 +1,8 @@
 export default async function handler(req, res) {
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbzwavjSaWjF9G1t9w0iTSEfJKUt-51O06JV2nwhcAEoWJcKf-7GzMFZsjDB82u4jgM/exec";
-  const SERPER_API_KEY = "7bdaceeb53e7779804418dabda1cbc871b26b364";
-  const HUNTER_API_KEY = "a3726c29ee95939ac553de002379c3b2edeaa344";
-  const GEMINI_API_KEY = "YOUR_GEMINI_API_KEY"; // Masukkan API Key Gemini Anda di sini
+  const GAS_URL = process.env.GAS_URL || "https://script.google.com/macros/s/AKfycbzwavjSaWjF9G1t9w0iTSEfJKUt-51O06JV2nwhcAEoWJcKf-7GzMFZsjDB82u4jgM/exec";
+  const SERPER_API_KEY = process.env.SERPER_API_KEY;
+  const HUNTER_API_KEY = process.env.HUNTER_API_KEY;
+  const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
   // Fungsi delay acak antara 300ms sampai 800ms agar terlihat manusiawi
   const randomDelay = () => new Promise(resolve => setTimeout(resolve, Math.floor(Math.random() * (800 - 300 + 1) + 300)));
@@ -10,14 +10,30 @@ export default async function handler(req, res) {
   const blacklist = ["amazon.", "alibaba.", "shopee.", "tiktok.", "instagram.", "facebook.", "twitter.", "reddit.", "quora.", "linkedin.", "myshopify.", "lazada.", "tokopedia.", "ebay."];
 
   try {
+    // 1. Ambil daftar keyword dari Google Sheets
     const kwRes = await fetch(GAS_URL);
     const keywords = await kwRes.json();
+
+    // 2. Ambil daftar domain yang sudah ada sebelumnya di sheet untuk mencegah duplikat lintas waktu
+    let existingDomainSet = new Set();
+    try {
+      const domainCheckRes = await fetch(`${GAS_URL}?action=getDomains`);
+      const existingDomains = await domainCheckRes.json();
+      if (Array.isArray(existingDomains)) {
+        existingDomains.forEach(domain => {
+          if (domain) existingDomainSet.add(String(domain).toLowerCase().trim());
+        });
+      }
+    } catch (err) {
+      console.warn("Gagal mengambil riwayat domain, melanjutkan tanpa pengecekan silang sheet:", err);
+    }
+
     let allPayloads = [];
 
     for (const entry of keywords) {
       await randomDelay();
 
-      // 1. Cari domain mentah menggunakan Serper berdasarkan keyword dan negara
+      // 3. Cari domain mentah menggunakan Serper berdasarkan keyword dan negara
       const serperRes = await fetch('https://google.serper.dev/search', {
         method: 'POST',
         headers: { 'X-API-KEY': SERPER_API_KEY, 'Content-Type': 'application/json' },
@@ -29,9 +45,12 @@ export default async function handler(req, res) {
 
       for (const item of serperData.organic) {
         const domain = new URL(item.link).hostname.replace('www.', '').toLowerCase();
+        
+        // Cek apakah domain masuk blacklist atau sudah pernah dicatat di Google Sheets
         if (blacklist.some(site => domain.includes(site))) continue;
+        if (existingDomainSet.has(domain)) continue; // Lewati jika domain sudah ada di sheet
 
-        // 2. Gunakan Gemini untuk mengekstrak & merapikan Nama Perusahaan, Alamat, dan Kode Negara (ISO 2 huruf)
+        // 4. Gunakan Gemini untuk mengekstrak & merapikan Nama Perusahaan, Alamat, dan Kode Negara (ISO 2 huruf)
         let cleanedCompany = item.title || domain;
         let cleanedAddress = item.snippet || "";
         let resolvedCountryCode = entry.countryCode || "";
@@ -58,7 +77,6 @@ export default async function handler(req, res) {
           const rawText = geminiData.candidates?.[0]?.content?.parts?.[0]?.text;
           
           if (rawText) {
-            // Bersihkan format markdown block jika terlanjur ada
             const jsonText = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
             const parsed = JSON.parse(jsonText);
             
@@ -72,9 +90,12 @@ export default async function handler(req, res) {
 
         await randomDelay();
 
-        // 3. Fetch data email ke Hunter.io
+        // 5. Fetch data email ke Hunter.io
         const hRes = await fetch(`https://api.hunter.io/v2/domain-search?domain=${domain}&api_key=${HUNTER_API_KEY}`);
         const hData = await hRes.json();
+
+        // Masukkan ke set lokal agar tidak duplikat dalam batch eksekusi yang sama
+        existingDomainSet.add(domain);
 
         allPayloads.push({
           company: cleanedCompany,        // Masuk ke Kolom A (Nama Perusahaan bersih)
@@ -89,7 +110,7 @@ export default async function handler(req, res) {
       }
     }
 
-    // 4. Kirim hasil dalam satu Batch besar ke Google Sheets
+    // 6. Kirim hasil dalam satu Batch besar ke Google Sheets
     if (allPayloads.length > 0) {
       await fetch(GAS_URL, {
         method: "POST",
