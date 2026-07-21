@@ -90,9 +90,19 @@ export default async function handler(req, res) {
 
         await randomDelay();
 
-        // 5. Fetch data email ke Hunter.io
-        const hRes = await fetch(`https://api.hunter.io/v2/domain-search?domain=${domain}&api_key=${HUNTER_API_KEY}`);
-        const hData = await hRes.json();
+        // 5. Fetch data email ke Hunter.io dengan penanganan error (Aman jika kredit habis)
+        let extractedEmail = "";
+        try {
+          const hRes = await fetch(`https://api.hunter.io/v2/domain-search?domain=${domain}&api_key=${HUNTER_API_KEY}`);
+          const hData = await hRes.json();
+          
+          if (hData && hData.data && hData.data.emails && hData.data.emails.length > 0) {
+            extractedEmail = hData.data.emails[0].value || "";
+          }
+        } catch (hunterErr) {
+          console.warn(`Hunter API error untuk domain ${domain} (kemungkinan kredit habis):`, hunterErr.message);
+          extractedEmail = ""; // Tetap dilanjutkan dengan email kosong
+        }
 
         // Masukkan ke set lokal agar tidak duplikat dalam batch eksekusi yang sama
         existingDomainSet.add(domain);
@@ -103,7 +113,7 @@ export default async function handler(req, res) {
           countryCode: resolvedCountryCode, // Masuk ke Kolom C (Kode Negara hasil Gemini / Sheet)
           address: cleanedAddress.length > 50 ? "" : cleanedAddress, // Masuk ke Kolom D
           phone: "",                      // Masuk ke Kolom E
-          email: hData.data?.emails?.[0]?.value || "", // Masuk ke Kolom F
+          email: extractedEmail,          // Masuk ke Kolom F (Aman, bernilai "" jika gagal/kredit habis)
           website: domain,                // Masuk ke Kolom G
           keyword: entry.keyword          // Masuk ke Kolom H
         });
